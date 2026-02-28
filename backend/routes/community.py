@@ -7,10 +7,10 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/community", response_model=list[CommunityMember])
-def get_community():
-    return store.get_community()
+async def get_community():
+    return await store.get_community()
 
 
 @router.get("/stats", response_model=StatsOut)
-def get_stats():
-    return StatsOut(userCount=store.get_user_count())
+async def get_stats():
+    return StatsOut(userCount=await store.get_user_count())

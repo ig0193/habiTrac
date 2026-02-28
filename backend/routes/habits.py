@@ -7,17 +7,17 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/users/{user_id}/habits", response_model=list[HabitOut])
-def get_user_habits(user_id: str):
-    return store.get_habits(user_id)
+async def get_user_habits(user_id: str):
+    return await store.get_habits(user_id)
 
 
 @router.post("/habits", response_model=HabitOut)
-def add_habit(req: AddHabitRequest):
-    return store.add_habit(req.userId, req.name, req.icon)
+async def add_habit(req: AddHabitRequest):
+    return await store.add_habit(req.userId, req.name, req.icon)
 
 
 @router.delete("/habits/{habit_id}")
-def delete_habit(habit_id: str):
-    if not store.delete_habit(habit_id):
+async def delete_habit(habit_id: str):
+    if not await store.delete_habit(habit_id):
         raise HTTPException(status_code=404, detail="Habit not found")
     return {"ok": True}
