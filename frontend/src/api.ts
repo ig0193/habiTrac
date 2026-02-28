@@ -13,7 +13,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(status: number, message: string) {
     super(message);
   }
 }
