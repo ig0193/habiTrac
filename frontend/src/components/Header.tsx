@@ -39,7 +39,9 @@ export default function Header() {
                           bg-card py-1 shadow-lg animate-in fade-in slide-in-from-top-1">
             <div className="px-3 py-2 border-b border-border">
               <p className="text-sm font-medium text-text">{currentUser.name}</p>
-              <p className="text-xs text-text-muted">Member</p>
+              {currentUser.userId && (
+                <p className="text-xs text-text-muted font-mono">@{currentUser.userId}</p>
+              )}
             </div>
             <button
               onClick={() => { setOpen(false); logout(); }}

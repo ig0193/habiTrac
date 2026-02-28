@@ -1,76 +1,84 @@
 import type { User, Habit, CheckIn } from './types';
-import * as mock from './mockData';
 
-/**
- * API layer — currently backed by in-memory mock data.
- * Each function mirrors a future REST endpoint.
- * When the BE is ready, replace implementations with fetch() calls.
- */
+async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body.detail ?? 'Something went wrong');
+  }
+  return res.json();
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
 
 // ── Auth ──────────────────────────────────────────────
 
-// POST /api/join
-export async function joinUser(name: string): Promise<User> {
-  // TODO: replace with fetch('/api/join', { method: 'POST', body: JSON.stringify({ name }) })
-  return mock.joinUser(name);
+export async function joinUser(userId: string, name: string): Promise<User> {
+  return request<User>('/api/join', {
+    method: 'POST',
+    body: JSON.stringify({ userId, name }),
+  });
 }
 
-// GET /api/users
+export async function loginUser(userId: string): Promise<User> {
+  return request<User>('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
 export async function getUsers(): Promise<User[]> {
-  // TODO: replace with fetch('/api/users')
-  return mock.getUsers();
+  return request<User[]>('/api/users');
 }
 
 // ── Habits ────────────────────────────────────────────
 
-// GET /api/users/:userId/habits
-export async function getHabits(userId: string): Promise<Habit[]> {
-  // TODO: replace with fetch(`/api/users/${userId}/habits`)
-  return mock.getHabits(userId);
+export async function getHabits(userInternalId: string): Promise<Habit[]> {
+  return request<Habit[]>(`/api/users/${userInternalId}/habits`);
 }
 
-// POST /api/habits
-export async function addHabit(userId: string, name: string, icon: string): Promise<Habit> {
-  // TODO: replace with fetch('/api/habits', { method: 'POST', body: ... })
-  return mock.addHabit(userId, name, icon);
+export async function addHabit(userInternalId: string, name: string, icon: string): Promise<Habit> {
+  return request<Habit>('/api/habits', {
+    method: 'POST',
+    body: JSON.stringify({ userId: userInternalId, name, icon }),
+  });
 }
 
-// DELETE /api/habits/:habitId
 export async function deleteHabit(habitId: string): Promise<void> {
-  // TODO: replace with fetch(`/api/habits/${habitId}`, { method: 'DELETE' })
-  return mock.deleteHabit(habitId);
+  await request(`/api/habits/${habitId}`, { method: 'DELETE' });
 }
 
 // ── Check-ins ─────────────────────────────────────────
 
-// GET /api/habits/:habitId/checkins
 export async function getCheckIns(habitId: string): Promise<CheckIn[]> {
-  // TODO: replace with fetch(`/api/habits/${habitId}/checkins`)
-  return mock.getCheckIns(habitId);
+  return request<CheckIn[]>(`/api/habits/${habitId}/checkins`);
 }
 
-// POST /api/habits/:habitId/checkin
 export async function checkIn(habitId: string, date: string): Promise<CheckIn> {
-  // TODO: replace with fetch(`/api/habits/${habitId}/checkin`, { method: 'POST', body: ... })
-  return mock.checkIn(habitId, date);
+  return request<CheckIn>(`/api/habits/${habitId}/checkin`, {
+    method: 'POST',
+    body: JSON.stringify({ date }),
+  });
 }
 
-// DELETE /api/habits/:habitId/checkin/:date
 export async function uncheckIn(habitId: string, date: string): Promise<void> {
-  // TODO: replace with fetch(...)
-  return mock.uncheckIn(habitId, date);
+  await request(`/api/habits/${habitId}/checkin/${date}`, { method: 'DELETE' });
 }
 
 // ── Community ─────────────────────────────────────────
 
-// GET /api/community (all users + their habits + this-week check-ins)
 export async function getCommunity(): Promise<{ user: User; habits: Habit[]; checkIns: CheckIn[] }[]> {
-  // TODO: replace with fetch('/api/community')
-  return mock.getCommunity();
+  return request('/api/community');
 }
 
-// GET /api/stats (total user count for join screen)
 export async function getUserCount(): Promise<number> {
-  // TODO: replace with fetch('/api/stats')
-  return mock.getUserCount();
+  const data = await request<{ userCount: number }>('/api/stats');
+  return data.userCount;
 }

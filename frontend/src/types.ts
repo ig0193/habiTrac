@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  userId?: string; // private handle — only present for the current user, never in community data
   name: string;
   joinedAt: string;
 }
