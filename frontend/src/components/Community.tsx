@@ -13,17 +13,44 @@ interface MemberData {
 export default function Community() {
   const { currentUser } = useApp();
   const [members, setMembers] = useState<MemberData[]>([]);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     api.getCommunity().then(setMembers);
   }, []);
 
   const otherMembers = members.filter(m => m.user.id !== currentUser?.id);
+  const filtered = search.trim()
+    ? otherMembers.filter(m =>
+        m.user.name.toLowerCase().startsWith(search.trim().toLowerCase())
+      )
+    : otherMembers;
 
   return (
     <div className="px-5 pb-8">
-      <p className="py-4 text-sm text-text-muted">
-        {otherMembers.length} {otherMembers.length === 1 ? 'member' : 'members'} tracking habits
+      {otherMembers.length > 0 && (
+        <div className="pt-4">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">
+              &#x1F50D;
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search members..."
+              className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-4 text-sm
+                         outline-none transition-shadow focus:ring-2 focus:ring-accent/40
+                         placeholder:text-text-muted/50"
+            />
+          </div>
+        </div>
+      )}
+
+      <p className="py-3 text-sm text-text-muted">
+        {search.trim()
+          ? `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`
+          : `${otherMembers.length} ${otherMembers.length === 1 ? 'member' : 'members'} tracking habits`}
       </p>
 
       {otherMembers.length === 0 ? (
@@ -32,9 +59,13 @@ export default function Community() {
           <p className="mt-4 text-text-muted">No other members yet</p>
           <p className="text-sm text-text-muted">Share habiTrac with friends!</p>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="mt-12 text-center">
+          <p className="text-text-muted">No members matching "{search.trim()}"</p>
+        </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {otherMembers.map(({ user, habits, checkIns }) => (
+          {filtered.map(({ user, habits, checkIns }) => (
             <div key={user.id}>
               <div className="mb-2 flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
