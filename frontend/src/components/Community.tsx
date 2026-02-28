@@ -10,10 +10,15 @@ interface MemberData {
   checkIns: CheckIn[];
 }
 
+function habitCountLabel(count: number): string {
+  return `${count} habit${count !== 1 ? 's' : ''}`;
+}
+
 export default function Community() {
   const { currentUser } = useApp();
   const [members, setMembers] = useState<MemberData[]>([]);
   const [search, setSearch] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     api.getCommunity().then(setMembers);
@@ -25,6 +30,10 @@ export default function Community() {
         m.user.name.toLowerCase().startsWith(search.trim().toLowerCase())
       )
     : otherMembers;
+
+  const toggleExpand = (userId: string) => {
+    setExpandedId(prev => (prev === userId ? null : userId));
+  };
 
   return (
     <div className="px-5 pb-8">
@@ -64,28 +73,43 @@ export default function Community() {
           <p className="text-text-muted">No members matching "{search.trim()}"</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5">
-          {filtered.map(({ user, habits, checkIns }) => (
-            <div key={user.id}>
-              <div className="mb-2 flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="font-medium text-text">{user.name}</span>
+        <div className="flex flex-col gap-2">
+          {filtered.map(({ user, habits, checkIns }) => {
+            const isOpen = expandedId === user.id;
+            return (
+              <div key={user.id} className="rounded-xl border border-border/50 bg-card overflow-hidden">
+                <button
+                  onClick={() => toggleExpand(user.id)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-bg/50"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-text truncate">{user.name}</p>
+                    <p className="text-xs text-text-muted">{habitCountLabel(habits.length)}</p>
+                  </div>
+                  <span className={`text-text-muted text-sm transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                    ▾
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div className="flex flex-col gap-2 px-4 pb-4">
+                    {habits.map(habit => (
+                      <HabitCard
+                        key={habit.id}
+                        habit={habit}
+                        checkIns={checkIns.filter(c => c.habitId === habit.id)}
+                        isOwn={false}
+                        returnTo="community"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col gap-2">
-                {habits.map(habit => (
-                  <HabitCard
-                    key={habit.id}
-                    habit={habit}
-                    checkIns={checkIns.filter(c => c.habitId === habit.id)}
-                    isOwn={false}
-                    returnTo="community"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
